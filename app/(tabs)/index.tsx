@@ -1,9 +1,11 @@
+import { useEffect } from "react";
 import { ScrollView, YStack } from "tamagui";
 
 import DateSwitcher from "../../components/DateSwitcher";
 import FoodCategoryInput from "../../components/FoodCategoryInput";
+import { initializeTables, openDatabase } from "../../db/DatabaseUtils";
 
-// const db = openDatabase();
+const db = openDatabase();
 
 const foodCategories = [
   { id: 1, category: "Azucares", number: 0 },
@@ -19,6 +21,9 @@ const foodCategories = [
 ];
 
 export default function FoodTrackingScreen() {
+  useEffect(() => {
+    initializeTables(db);
+  }, []);
   return (
     <ScrollView
       backgroundColor="#FFF0F5"
