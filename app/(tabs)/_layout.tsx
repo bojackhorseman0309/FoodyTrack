@@ -1,7 +1,7 @@
-import { Cookie, Info, Settings } from "@tamagui/lucide-icons";
-import { Link, Tabs } from "expo-router";
+import { Apple, BookOpen, Cookie } from "@tamagui/lucide-icons";
+import { Tabs } from "expo-router";
 import React from "react";
-import { Pressable, useColorScheme } from "react-native";
+import { useColorScheme } from "react-native";
 
 import Colors from "../../constants/Colors";
 
@@ -19,26 +19,20 @@ export default function TabLayout() {
         options={{
           title: "Food Tracking",
           tabBarIcon: ({ color }) => <Cookie color={color} />,
-          headerRight: () => (
-            <Link href="/modal" asChild>
-              <Pressable>
-                {({ pressed }) => (
-                  <Info
-                    size={25}
-                    color={Colors[colorScheme ?? "light"].text}
-                    style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
-                  />
-                )}
-              </Pressable>
-            </Link>
-          ),
         }}
       />
       <Tabs.Screen
-        name="two"
+        name="foodCategories"
         options={{
-          title: "Tab Two",
-          tabBarIcon: ({ color }) => <Settings color={color} />,
+          title: "Food Categories",
+          tabBarIcon: ({ color }) => <Apple color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="mealPlans"
+        options={{
+          title: "Meal Plans",
+          tabBarIcon: ({ color }) => <BookOpen color={color} />,
         }}
       />
     </Tabs>
