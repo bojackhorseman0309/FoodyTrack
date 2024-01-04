@@ -1,35 +1,98 @@
-import { StyleSheet } from "react-native";
+import { useEffect, useState } from "react";
+import { Button, ScrollView, YStack } from "tamagui";
 
-import EditScreenInfo from "../../components/EditScreenInfo";
-import { Text, View } from "../../components/Themed";
+import FoodCategoryInput from "../../components/FoodCategoryInput";
+import { openDatabase } from "../../db/DatabaseUtils";
 
-export default function TabTwoScreen() {
+const db = openDatabase();
+
+export default function ManageFoodCategoriesScreen() {
+  const [addNewCategory, setAddNewCategory] = useState(false);
+  const [foodCategories, setFoodCategories] = useState<any[]>([]);
+  const [forceUpdate, setForceUpdate] = useState(0);
+
+  useEffect(() => {
+    setAddNewCategory(false);
+    db.transaction((tx) => {
+      tx.executeSql(
+        `SELECT *
+                 FROM FoodCategory;`,
+        [],
+        (_, { rows: { _array } }) => setFoodCategories(_array),
+      );
+    });
+  }, [forceUpdate]);
+
+  const onSave = (name: string, id: number | undefined) => {
+    if (id) {
+      db.transaction(
+        (tx) => {
+          tx.executeSql("UPDATE FoodCategory SET name = ? WHERE id = ?", [
+            name,
+            id,
+          ]);
+        },
+        undefined,
+        () => setForceUpdate(forceUpdate + 1),
+      );
+    } else {
+      db.transaction(
+        (tx) => {
+          tx.executeSql("INSERT INTO FoodCategory (name) values (?)", [name]);
+        },
+        undefined,
+        () => setForceUpdate(forceUpdate + 1),
+      );
+    }
+  };
+
+  const onDelete = (id: number) => {
+    db.transaction(
+      (tx) => {
+        tx.executeSql("DELETE FROM FoodCategory WHERE id = ?", [id]);
+      },
+      undefined,
+      () => setForceUpdate(forceUpdate + 1),
+    );
+  };
+
+  console.log(forceUpdate);
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Tab Two</Text>
-      <View
-        style={styles.separator}
-        lightColor="#eee"
-        darkColor="rgba(255,255,255,0.1)"
-      />
-      <EditScreenInfo path="app/(tabs)/foodCategories.tsx" />
-    </View>
+    <ScrollView
+      backgroundColor="#FFF0F5"
+      contentContainerStyle={{ padding: 15 }}
+    >
+      <YStack space="$5">
+        <Button
+          size="$3"
+          theme="active"
+          alignSelf="flex-start"
+          onPress={() => setAddNewCategory(true)}
+        >
+          Add
+        </Button>
+        <YStack space="$3">
+          {addNewCategory && (
+            <FoodCategoryInput
+              name=""
+              isEdit
+              onSave={(name, id) => onSave(name, id)}
+              onDelete={onDelete}
+            />
+          )}
+          {foodCategories.map((foodCategory) => (
+            <FoodCategoryInput
+              key={foodCategory.id}
+              id={foodCategory.id}
+              name={foodCategory.name}
+              isEdit={false}
+              onSave={(name, id) => onSave(name, id)}
+              onDelete={onDelete}
+            />
+          ))}
+        </YStack>
+      </YStack>
+    </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
-  },
-  separator: {
-    marginVertical: 30,
-    height: 1,
-    width: "80%",
-  },
-});

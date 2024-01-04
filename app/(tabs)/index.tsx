@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { ScrollView, YStack } from "tamagui";
 
 import DateSwitcher from "../../components/DateSwitcher";
-import FoodCategoryInput from "../../components/FoodCategoryInput";
+import FoodCategoryNumericInput from "../../components/FoodCategoryNumericInput";
 import { initializeTables, openDatabase } from "../../db/DatabaseUtils";
 
 const db = openDatabase();
@@ -37,7 +37,7 @@ export default function FoodTrackingScreen() {
           onClick={() => console.log("hello")}
         />
         {foodCategories.map((foodCategory, index) => (
-          <FoodCategoryInput
+          <FoodCategoryNumericInput
             key={foodCategory.id}
             category={foodCategory.category}
             number={foodCategory.number}
