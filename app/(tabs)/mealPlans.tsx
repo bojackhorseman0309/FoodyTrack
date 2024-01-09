@@ -1,35 +1,70 @@
-import { StyleSheet } from "react-native";
+import { useEffect, useState } from "react";
+import { Button, Label, ScrollView, XStack, YStack } from "tamagui";
 
-import EditScreenInfo from "../../components/EditScreenInfo";
-import { Text, View } from "../../components/Themed";
+import CreateMealPlanForm from "../../components/CreateMealPlanForm";
+import CustomSelect from "../../components/CustomSelect";
+import MealPlanFoodCategoryInput from "../../components/MealPlanFoodCategoryInput";
+import { openDatabase } from "../../db/DatabaseUtils";
+
+const db = openDatabase();
 
 export default function MealPlanScreen() {
+  const [addNewCategory, setAddNewCategory] = useState(false);
+  const [foodCategories, setFoodCategories] = useState<any[]>([]);
+  const [forceUpdate, setForceUpdate] = useState(0);
+
+  useEffect(() => {
+    db.transaction((tx) => {
+      tx.executeSql(
+        `SELECT *
+                 FROM FoodCategory;`,
+        [],
+        (_, { rows: { _array } }) => setFoodCategories(_array),
+      );
+    });
+  }, [forceUpdate]);
+
+  const onSave = (quantity: string, id: number) => {
+    console.log("saving....");
+  };
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Tab Two</Text>
-      <View
-        style={styles.separator}
-        lightColor="#eee"
-        darkColor="rgba(255,255,255,0.1)"
-      />
-      <EditScreenInfo path="app/(tabs)/mealPlan.tsx" />
-    </View>
+    <ScrollView
+      backgroundColor="#FFF0F5"
+      contentContainerStyle={{ padding: 15 }}
+    >
+      <YStack space="$4">
+        {addNewCategory && <CreateMealPlanForm />}
+        {!addNewCategory && (
+          <YStack space="$4">
+            <Button
+              size="$3"
+              theme="active"
+              alignSelf="flex-start"
+              onPress={() => setAddNewCategory(true)}
+            >
+              Add
+            </Button>
+            <XStack ai="center" space>
+              <Label f={1} fb={0}>
+                Plan
+              </Label>
+              <CustomSelect />
+            </XStack>
+            <YStack space="$3">
+              {foodCategories.map((foodCategory) => (
+                <MealPlanFoodCategoryInput
+                  key={foodCategory.id}
+                  id={foodCategory.id}
+                  allowedQuantity=""
+                  name={foodCategory.name}
+                  onSave={(name, id) => onSave(name, id)}
+                />
+              ))}
+            </YStack>
+          </YStack>
+        )}
+      </YStack>
+    </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
-  },
-  separator: {
-    marginVertical: 30,
-    height: 1,
-    width: "80%",
-  },
-});

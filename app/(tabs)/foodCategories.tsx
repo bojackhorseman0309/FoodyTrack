@@ -56,8 +56,6 @@ export default function ManageFoodCategoriesScreen() {
     );
   };
 
-  console.log(forceUpdate);
-
   return (
     <ScrollView
       backgroundColor="#FFF0F5"

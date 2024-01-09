@@ -22,7 +22,7 @@ function initializeTables(db: SQLiteDatabase) {
         ");",
     );
     tx.executeSql(
-      "CREATE TABLE IF NOT EXISTS DailyPlanHistory (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, datetime TEXT NOT NULL UNIQUE);",
+      "CREATE TABLE IF NOT EXISTS DailyPlanHistory (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, datetime TEXT NOT NULL UNIQUE, mealPlanId INTEGER NOT NULL, CONSTRAINT FK_MEAL_PLAN FOREIGN KEY (mealPlanId) REFERENCES MealPlan(id));",
     );
     tx.executeSql(
       "CREATE TABLE IF NOT EXISTS DailyPlanHistoryFoodCategories " +
