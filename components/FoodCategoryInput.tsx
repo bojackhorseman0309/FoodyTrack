@@ -7,6 +7,7 @@ interface FoodCategoryInputProps {
   isEdit: boolean;
   onSave: (name: string, id: number | undefined) => void;
   onDelete: (id: number) => void;
+  onCancel?: () => void;
 }
 
 const FoodCategoryInput = ({
@@ -15,6 +16,7 @@ const FoodCategoryInput = ({
   isEdit,
   onSave,
   onDelete,
+  onCancel,
 }: FoodCategoryInputProps) => {
   const [inputName, setInputName] = useState("");
   const [showError, setShowError] = useState(false);
@@ -41,8 +43,18 @@ const FoodCategoryInput = ({
   }, [isEdit]);
 
   useEffect(() => {
-    setInputName(name);
+    if (inputName === "") {
+      setInputName(name);
+    }
   }, [name]);
+
+  const onCancelInput = () => {
+    if (onCancel !== undefined) {
+      onCancel();
+    } else {
+      setEditMode(false);
+    }
+  };
 
   return (
     <Stack backgroundColor="lightgrey" borderRadius="$3" padding="$3">
@@ -50,7 +62,7 @@ const FoodCategoryInput = ({
         <YStack space="$2">
           <XStack space="$2" alignItems="center">
             <Input
-              value={name}
+              value={inputName}
               flex={1}
               size="$2"
               onChangeText={(text) => setInputName(text)}
@@ -58,6 +70,9 @@ const FoodCategoryInput = ({
             />
             <Button size="$2" onPress={doSave}>
               Save
+            </Button>
+            <Button size="$2" onPress={onCancelInput}>
+              Cancel
             </Button>
           </XStack>
           {showError && (

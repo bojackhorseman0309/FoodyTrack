@@ -77,6 +77,7 @@ export default function ManageFoodCategoriesScreen() {
               isEdit
               onSave={(name, id) => onSave(name, id)}
               onDelete={onDelete}
+              onCancel={() => setAddNewCategory(false)}
             />
           )}
           {foodCategories.map((foodCategory) => (
