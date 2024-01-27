@@ -5,4 +5,10 @@ interface MealPlan {
   isActive: boolean;
 }
 
-export type { MealPlan };
+interface MealPlanFoodCategory {
+  foodCategoryId: number;
+  mealPlanFoodCategoryId: number;
+  amount: number;
+}
+
+export type { MealPlan, MealPlanFoodCategory };

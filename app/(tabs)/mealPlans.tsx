@@ -1,11 +1,19 @@
 import { useEffect, useState } from "react";
-import { Button, Label, ScrollView, XStack, YStack } from "tamagui";
+import {
+  Button,
+  Label,
+  ScrollView,
+  Spinner,
+  Stack,
+  XStack,
+  YStack,
+} from "tamagui";
 
 import MealPlanFoodCategoryInput from "../../components/MealPlanFoodCategoryInput";
 import MealPlanForm from "../../components/MealPlanForm";
 import MealPlanSelect from "../../components/MealPlanSelect";
 import { openDatabase } from "../../db/DatabaseUtils";
-import { MealPlan } from "../../models/DatabaseModels";
+import { MealPlan, MealPlanFoodCategory } from "../../models/DatabaseModels";
 import { getBooleanAsNumber } from "../../utils/NumberUtils";
 
 const db = openDatabase();
@@ -15,6 +23,13 @@ export default function MealPlanScreen() {
   const [foodCategories, setFoodCategories] = useState<any[]>([]);
   const [forceUpdate, setForceUpdate] = useState(0);
   const [mealPlans, setMealPlans] = useState<MealPlan[]>([]);
+  const [mealPlanFoodCategories, setMealPlanFoodCategories] = useState<
+    MealPlanFoodCategory[]
+  >([]);
+  const [currentMealPlanId, setCurrentMealPlanId] = useState<
+    number | undefined
+  >();
+  const [loading, setLoading] = useState(false);
 
   const mapMealPlanToModel = (mealPlansFromDB: any[]) => {
     const mealPlans: MealPlan[] = [];
@@ -28,6 +43,21 @@ export default function MealPlanScreen() {
     }
 
     return mealPlans;
+  };
+
+  const mapMealPlanFoodCategoriesToModel = (
+    mealPlanFoodCategoriesFromDB: any[],
+  ) => {
+    const mealPlanFoodCategories: MealPlanFoodCategory[] = [];
+    for (const rawMealPlan of mealPlanFoodCategoriesFromDB) {
+      mealPlanFoodCategories.push({
+        foodCategoryId: rawMealPlan.foodCategoryId,
+        mealPlanFoodCategoryId: rawMealPlan.mealPlanFoodCategoryId,
+        amount: rawMealPlan.amount,
+      });
+    }
+
+    return mealPlanFoodCategories;
   };
 
   useEffect(() => {
@@ -48,6 +78,10 @@ export default function MealPlanScreen() {
         (_, { rows: { _array } }) => {
           const mealPlans = mapMealPlanToModel(_array);
           setMealPlans(mealPlans);
+
+          if (mealPlans.length > 0) {
+            onSelectMealPlan(mealPlans[0].id);
+          }
         },
       );
     });
@@ -82,25 +116,96 @@ export default function MealPlanScreen() {
     }
   };
 
-  const onSaveMealPlanFoodCategory = (quantity: string, id: number) => {
-    console.log("Saving quantity");
+  const onSaveMealPlanFoodCategory = (
+    amount: string,
+    foodCategoryId: number,
+    mealPlanFoodCategoryId?: number,
+  ) => {
+    if (currentMealPlanId) {
+      if (mealPlanFoodCategoryId) {
+        db.transaction(
+          (tx) => {
+            tx.executeSql(
+              "UPDATE MealPlanFoodCategories " +
+                "SET amount = ? " +
+                "WHERE id = ? ",
+              [amount, mealPlanFoodCategoryId],
+            );
+          },
+          undefined,
+          undefined,
+        );
+      } else {
+        db.transaction(
+          (tx) => {
+            tx.executeSql(
+              "INSERT INTO MealPlanFoodCategories (amount, foodCategoryId, mealPlanId) values (?, ?, ?)",
+              [amount, foodCategoryId, currentMealPlanId],
+            );
+          },
+          undefined,
+          undefined,
+        );
+      }
+    }
   };
 
   const onSelectMealPlan = (id: number) => {
+    setLoading(true);
+    setCurrentMealPlanId(id);
     db.transaction((tx) => {
       tx.executeSql(
-        "SELECT mpfc.id, mpfc.amount, fc.id" +
+        "SELECT mpfc.id AS mealPlanFoodCategoryId, mpfc.amount, fc.id AS foodCategoryId " +
           "FROM MealPlanFoodCategories mpfc, " +
           "FoodCategory fc, " +
           "MealPlan mp " +
           "WHERE mpfc.foodCategoryId = fc.id " +
-          "AND mpfc.mealPlanId = mp.id" +
+          "AND mpfc.mealPlanId = mp.id " +
           "AND mpfc.id = ?",
         [id],
-        (_, { rows: { _array } }) => console.log({ _array }),
+        (_, { rows: { _array } }) => {
+          const mealPlanFoodCategories =
+            mapMealPlanFoodCategoriesToModel(_array);
+          setMealPlanFoodCategories(mealPlanFoodCategories);
+          setLoading(false);
+        },
+        undefined,
       );
     });
   };
+
+  const getMealPlanFoodCategoryAmount = (foodCategoryId: number) => {
+    const mealPlanFoodCategory = mealPlanFoodCategories.find(
+      (mealPlanFoodCategory) =>
+        mealPlanFoodCategory.foodCategoryId === foodCategoryId,
+    );
+
+    return mealPlanFoodCategory ? mealPlanFoodCategory.amount.toString() : "";
+  };
+
+  const getMealPlanFoodCategoryId = (foodCategoryId: number) => {
+    const mealPlanFoodCategory = mealPlanFoodCategories.find(
+      (mealPlanFoodCategory) =>
+        mealPlanFoodCategory.foodCategoryId === foodCategoryId,
+    );
+
+    return mealPlanFoodCategory
+      ? mealPlanFoodCategory.mealPlanFoodCategoryId
+      : undefined;
+  };
+
+  if (loading) {
+    return (
+      <Stack
+        backgroundColor="#FFF0F5"
+        alignItems="center"
+        justifyContent="center"
+        flex={1}
+      >
+        <Spinner size="large" />
+      </Stack>
+    );
+  }
 
   return (
     <ScrollView
@@ -129,6 +234,7 @@ export default function MealPlanScreen() {
                 Plan
               </Label>
               <MealPlanSelect
+                currentMealPlanId={currentMealPlanId}
                 mealPlans={mealPlans}
                 onSelectMealPlan={onSelectMealPlan}
               />
@@ -138,9 +244,15 @@ export default function MealPlanScreen() {
                 <MealPlanFoodCategoryInput
                   key={foodCategory.id}
                   id={foodCategory.id}
-                  allowedQuantity=""
+                  allowedAmount={getMealPlanFoodCategoryAmount(foodCategory.id)}
                   name={foodCategory.name}
-                  onSave={(name, id) => onSaveMealPlanFoodCategory(name, id)}
+                  onSave={(name, id) =>
+                    onSaveMealPlanFoodCategory(
+                      name,
+                      id,
+                      getMealPlanFoodCategoryId(foodCategory.id),
+                    )
+                  }
                 />
               ))}
             </YStack>

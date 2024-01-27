@@ -15,6 +15,7 @@ import { MealPlan } from "../models/DatabaseModels";
 import { formatDate } from "../utils/DateUtils";
 
 interface MealPlanSelectProps {
+  currentMealPlanId: number | undefined;
   mealPlans: MealPlan[];
   onSelectMealPlan: (id: number) => void;
 }
@@ -23,10 +24,10 @@ const MealPlanSelect = (props: SelectProps & MealPlanSelectProps) => {
   const [val, setVal] = useState("0");
 
   useEffect(() => {
-    if (props.mealPlans.length > 0 && val === "0") {
-      setMealPlan(props.mealPlans[0].id.toString());
+    if (props.currentMealPlanId && val === "0") {
+      setVal(props.currentMealPlanId.toString());
     }
-  }, [props.mealPlans]);
+  }, [props.currentMealPlanId]);
 
   const setMealPlan = (id: string) => {
     setVal(id);

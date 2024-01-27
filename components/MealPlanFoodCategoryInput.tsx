@@ -6,26 +6,26 @@ import { isNumeric } from "../utils/NumberUtils";
 interface MealPlanFoodCategoryInputProps {
   id: number;
   name: string;
-  allowedQuantity: string;
+  allowedAmount: string;
   onSave: (quantity: string, id: number) => void;
 }
 
 const MealPlanFoodCategoryInput = ({
   id,
   name,
-  allowedQuantity,
+  allowedAmount,
   onSave,
 }: MealPlanFoodCategoryInputProps) => {
-  const [inputName, setInputName] = useState("");
+  const [amount, setAmount] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isEditMode, setEditMode] = useState(false);
 
   const doSave = () => {
-    if (inputName) {
-      if (isNumeric(inputName)) {
+    if (amount) {
+      if (isNumeric(amount)) {
         setErrorMessage("");
         setEditMode(false);
-        onSave(inputName, id);
+        onSave(amount, id);
       } else {
         setErrorMessage("Input cannot be a string");
       }
@@ -35,14 +35,16 @@ const MealPlanFoodCategoryInput = ({
   };
 
   useEffect(() => {
-    if (inputName && isNumeric(inputName)) {
+    if (amount && isNumeric(amount)) {
       setErrorMessage("");
     }
-  }, [inputName]);
+  }, [amount]);
 
   useEffect(() => {
-    setInputName(name);
-  }, [name]);
+    if (amount === "") {
+      setAmount(allowedAmount);
+    }
+  }, [allowedAmount]);
 
   return (
     <Stack backgroundColor="lightgrey" borderRadius="$3" padding="$3">
@@ -51,16 +53,22 @@ const MealPlanFoodCategoryInput = ({
           <Text fontSize="$2">{name}</Text>
           <Input
             keyboardType="numeric"
-            value={allowedQuantity}
+            disabled={!isEditMode}
+            value={amount}
             flex={1}
             size="$2"
-            onChangeText={(text) => setInputName(text)}
+            onChangeText={(text) => setAmount(text)}
             placeholder="Allowed quantity..."
           />
           {isEditMode && (
-            <Button size="$2" onPress={doSave}>
-              Save
-            </Button>
+            <XStack space="$2">
+              <Button size="$2" onPress={doSave}>
+                Save
+              </Button>
+              <Button size="$2" onPress={() => setEditMode(false)}>
+                Cancel
+              </Button>
+            </XStack>
           )}
           {!isEditMode && (
             <Button size="$2" onPress={() => setEditMode(true)}>
