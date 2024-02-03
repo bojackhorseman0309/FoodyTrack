@@ -143,7 +143,7 @@ export default function MealPlanScreen() {
               [amount, foodCategoryId, currentMealPlanId],
             );
           },
-          undefined,
+          (error) => console.error(error),
           undefined,
         );
       }
@@ -161,7 +161,7 @@ export default function MealPlanScreen() {
           "MealPlan mp " +
           "WHERE mpfc.foodCategoryId = fc.id " +
           "AND mpfc.mealPlanId = mp.id " +
-          "AND mpfc.id = ?",
+          "AND mp.id = ?",
         [id],
         (_, { rows: { _array } }) => {
           const mealPlanFoodCategories =
@@ -192,6 +192,20 @@ export default function MealPlanScreen() {
     return mealPlanFoodCategory
       ? mealPlanFoodCategory.mealPlanFoodCategoryId
       : undefined;
+  };
+
+  const onDeleteMealPlan = () => {
+    if (currentMealPlanId) {
+      db.transaction(
+        (tx) => {
+          tx.executeSql("DELETE FROM MealPlan WHERE id = ?;", [
+            currentMealPlanId,
+          ]);
+        },
+        (error) => console.error(error),
+        () => setForceUpdate(forceUpdate + 1),
+      );
+    }
   };
 
   if (loading) {
@@ -238,6 +252,10 @@ export default function MealPlanScreen() {
                 mealPlans={mealPlans}
                 onSelectMealPlan={onSelectMealPlan}
               />
+            </XStack>
+            <XStack ai="center" space>
+              <Button>Edit</Button>
+              <Button onPress={onDeleteMealPlan}>Delete</Button>
             </XStack>
             <YStack space="$3">
               {foodCategories.map((foodCategory) => (
