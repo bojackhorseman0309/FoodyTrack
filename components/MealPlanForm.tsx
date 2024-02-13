@@ -2,7 +2,7 @@ import {
   DateTimePickerAndroid,
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button, Form, Input, Switch, Text, XStack } from "tamagui";
 
 import { MealPlan } from "../models/DatabaseModels";
@@ -28,6 +28,14 @@ const MealPlanForm = ({
   const [endDate, setEndDate] = useState(new Date());
   const [isActive, setIsActive] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (mealPlan) {
+      setStartDate(new Date(mealPlan.startDateTime));
+      setEndDate(new Date(mealPlan.endDateTime));
+      setIsActive(mealPlan.isActive);
+    }
+  }, [mealPlan]);
 
   const onChangeStartDate = (
     _event: DateTimePickerEvent,

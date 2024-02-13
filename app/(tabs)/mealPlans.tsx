@@ -20,6 +20,7 @@ const db = openDatabase();
 
 export default function MealPlanScreen() {
   const [addNewPlan, setAddNewPlan] = useState(false);
+  const [editMealPlan, setEditMealPlan] = useState(false);
   const [foodCategories, setFoodCategories] = useState<any[]>([]);
   const [forceUpdate, setForceUpdate] = useState(0);
   const [mealPlans, setMealPlans] = useState<MealPlan[]>([]);
@@ -94,7 +95,25 @@ export default function MealPlanScreen() {
     id?: number,
   ) => {
     if (id) {
-      console.log("Updating...");
+      db.transaction(
+        (tx) => {
+          tx.executeSql(
+            "UPDATE MealPlan SET startDateTime = ?, endDateTime = ?, isActive = ? WHERE id = ?",
+            [
+              startDate.toISOString(),
+              endDate.toISOString(),
+              getBooleanAsNumber(isActive),
+              id,
+            ],
+          );
+        },
+        undefined,
+        () => {
+          setAddNewPlan(false);
+          setEditMealPlan(false);
+          setForceUpdate(forceUpdate + 1);
+        },
+      );
     } else {
       db.transaction(
         (tx) => {
@@ -110,6 +129,7 @@ export default function MealPlanScreen() {
         undefined,
         () => {
           setAddNewPlan(false);
+          setEditMealPlan(false);
           setForceUpdate(forceUpdate + 1);
         },
       );
@@ -208,6 +228,14 @@ export default function MealPlanScreen() {
     }
   };
 
+  const findCurrentMealPlan = () => {
+    const currentMealPlan = mealPlans.find((mp) => mp.id === currentMealPlanId);
+
+    if (currentMealPlan) {
+      return currentMealPlan;
+    }
+  };
+
   if (loading) {
     return (
       <Stack
@@ -227,13 +255,17 @@ export default function MealPlanScreen() {
       contentContainerStyle={{ padding: 15 }}
     >
       <YStack space="$4">
-        {addNewPlan && (
+        {(addNewPlan || editMealPlan) && (
           <MealPlanForm
-            onCancel={() => setAddNewPlan(false)}
+            mealPlan={editMealPlan ? findCurrentMealPlan() : undefined}
+            onCancel={() => {
+              setAddNewPlan(false);
+              setEditMealPlan(false);
+            }}
             onSaveMealPlan={onSaveMealPlan}
           />
         )}
-        {!addNewPlan && (
+        {!(addNewPlan || editMealPlan) && (
           <YStack space="$4">
             <Button
               size="$3"
@@ -254,7 +286,7 @@ export default function MealPlanScreen() {
               />
             </XStack>
             <XStack ai="center" space>
-              <Button>Edit</Button>
+              <Button onPress={() => setEditMealPlan(true)}>Edit</Button>
               <Button onPress={onDeleteMealPlan}>Delete</Button>
             </XStack>
             <YStack space="$3">
