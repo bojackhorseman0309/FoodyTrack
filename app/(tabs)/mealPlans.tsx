@@ -14,6 +14,7 @@ import MealPlanForm from "../../components/MealPlanForm";
 import MealPlanSelect from "../../components/MealPlanSelect";
 import { openDatabase } from "../../db/DatabaseUtils";
 import { MealPlan, MealPlanFoodCategory } from "../../models/DatabaseModels";
+import { mapMealPlanToModel } from "../../utils/MappingUtils";
 import { getBooleanAsNumber } from "../../utils/NumberUtils";
 
 const db = openDatabase();
@@ -31,20 +32,6 @@ export default function MealPlanScreen() {
     number | undefined
   >();
   const [loading, setLoading] = useState(false);
-
-  const mapMealPlanToModel = (mealPlansFromDB: any[]) => {
-    const mealPlans: MealPlan[] = [];
-    for (const rawMealPlan of mealPlansFromDB) {
-      mealPlans.push({
-        id: rawMealPlan.id,
-        startDateTime: rawMealPlan.startDateTime,
-        endDateTime: rawMealPlan.endDateTime,
-        isActive: rawMealPlan.isActive,
-      });
-    }
-
-    return mealPlans;
-  };
 
   const mapMealPlanFoodCategoriesToModel = (
     mealPlanFoodCategoriesFromDB: any[],

@@ -11,4 +11,10 @@ interface MealPlanFoodCategory {
   amount: number;
 }
 
-export type { MealPlan, MealPlanFoodCategory };
+interface DailyPlanHistory {
+  id: number;
+  datetime: string;
+  mealPlanId: number;
+}
+
+export type { MealPlan, MealPlanFoodCategory, DailyPlanHistory };
