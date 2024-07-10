@@ -1,4 +1,11 @@
-import { DailyPlanHistory, MealPlan } from "../models/DatabaseModels";
+import {
+  DailyPlanHistory,
+  DailyPlanHistoryFoodCategories,
+  FoodCategory,
+  MealPlan,
+  MealPlanFoodCategory,
+} from "../models/DatabaseModels";
+import { SyncedPlanFoodCategories } from "../models/FoodTracking";
 
 const mapMealPlanToModel = (mealPlansFromDB: any[]) => {
   const mealPlans: MealPlan[] = [];
@@ -27,4 +34,99 @@ const mapDailyPlanHistoryToModel = (dailyPlanHistoryFromDB: any[]) => {
   return dailyPlanHistories;
 };
 
-export { mapMealPlanToModel, mapDailyPlanHistoryToModel };
+const mapFoodCategoriesToModel = (rawFoodCategories: any[]) => {
+  const foodCategories: FoodCategory[] = [];
+  for (const rawFoodCategory of rawFoodCategories) {
+    foodCategories.push({
+      id: rawFoodCategory.id,
+      name: rawFoodCategory.name,
+    });
+  }
+
+  return foodCategories;
+};
+
+const mapMealPlanFoodCategoriesToModel = (
+  mealPlanFoodCategoriesFromDB: any[],
+) => {
+  const mealPlanFoodCategories: MealPlanFoodCategory[] = [];
+  for (const rawMealPlan of mealPlanFoodCategoriesFromDB) {
+    mealPlanFoodCategories.push({
+      id: rawMealPlan.id,
+      amount: rawMealPlan.amount,
+      foodCategoryId: rawMealPlan.foodCategoryId,
+      mealPlanId: rawMealPlan.mealPlanId,
+    });
+  }
+
+  return mealPlanFoodCategories;
+};
+
+const mapDailyPlanHistoryFoodCategoriesToModel = (
+  rawDailyPlanFoodCategories: any[],
+) => {
+  const dailyPlanHistoryFoodCategories: DailyPlanHistoryFoodCategories[] = [];
+  for (const rawDailyPlanFoodCategory of rawDailyPlanFoodCategories) {
+    dailyPlanHistoryFoodCategories.push({
+      id: rawDailyPlanFoodCategory.mealPlanFoodCategoryId,
+      amount: rawDailyPlanFoodCategory.amount,
+      foodCategoryId: rawDailyPlanFoodCategory.foodCategoryId,
+      dailyPlanHistoryId: rawDailyPlanFoodCategory.dailyPlanHistoryId,
+    });
+  }
+
+  return dailyPlanHistoryFoodCategories;
+};
+
+const syncMealPlanFoodCategoriesWithDailyPlan = (
+  mealPlanFoodCategories: MealPlanFoodCategory[],
+  foodCategories: FoodCategory[],
+  dailyPlanFoodCategories: DailyPlanHistoryFoodCategories[],
+) => {
+  const syncedFoodCategories: SyncedPlanFoodCategories[] = [];
+
+  for (const foodCategory of foodCategories) {
+    syncedFoodCategories.push({
+      mealPlanFoodCategoryId: 0,
+      foodCategoryId: foodCategory.id,
+      name: foodCategory.name,
+      maxAmount: 0,
+      currentAmount: 0,
+    });
+  }
+
+  for (const mealPlanFoodCategory of mealPlanFoodCategories) {
+    const foundIndex = syncedFoodCategories.findIndex(
+      (elem) => elem.foodCategoryId === mealPlanFoodCategory.foodCategoryId,
+    );
+
+    if (foundIndex >= 0) {
+      syncedFoodCategories[foundIndex].maxAmount = mealPlanFoodCategory.amount;
+      syncedFoodCategories[foundIndex].mealPlanFoodCategoryId =
+        mealPlanFoodCategory.id;
+    }
+  }
+
+  for (const dailyPlanHistoryFoodCategory of dailyPlanFoodCategories) {
+    const foundIndex = syncedFoodCategories.findIndex(
+      (elem) =>
+        elem.foodCategoryId === dailyPlanHistoryFoodCategory.foodCategoryId,
+    );
+
+    if (foundIndex >= 0) {
+      syncedFoodCategories[foundIndex].maxAmount =
+        dailyPlanHistoryFoodCategory.amount;
+    }
+  }
+
+  return syncedFoodCategories;
+};
+
+export {
+  mapMealPlanToModel,
+  mapDailyPlanHistoryToModel,
+  mapFoodCategoriesToModel,
+  mapMealPlanFoodCategoriesToModel,
+  mapDailyPlanHistoryFoodCategoriesToModel,
+  syncMealPlanFoodCategoriesWithDailyPlan,
+};

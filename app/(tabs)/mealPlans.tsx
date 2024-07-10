@@ -14,7 +14,10 @@ import MealPlanForm from "../../components/MealPlanForm";
 import MealPlanSelect from "../../components/MealPlanSelect";
 import { openDatabase } from "../../db/DatabaseUtils";
 import { MealPlan, MealPlanFoodCategory } from "../../models/DatabaseModels";
-import { mapMealPlanToModel } from "../../utils/MappingUtils";
+import {
+  mapMealPlanFoodCategoriesToModel,
+  mapMealPlanToModel,
+} from "../../utils/MappingUtils";
 import { getBooleanAsNumber } from "../../utils/NumberUtils";
 
 const db = openDatabase();
@@ -32,21 +35,6 @@ export default function MealPlanScreen() {
     number | undefined
   >();
   const [loading, setLoading] = useState(false);
-
-  const mapMealPlanFoodCategoriesToModel = (
-    mealPlanFoodCategoriesFromDB: any[],
-  ) => {
-    const mealPlanFoodCategories: MealPlanFoodCategory[] = [];
-    for (const rawMealPlan of mealPlanFoodCategoriesFromDB) {
-      mealPlanFoodCategories.push({
-        foodCategoryId: rawMealPlan.foodCategoryId,
-        mealPlanFoodCategoryId: rawMealPlan.mealPlanFoodCategoryId,
-        amount: rawMealPlan.amount,
-      });
-    }
-
-    return mealPlanFoodCategories;
-  };
 
   useEffect(() => {
     db.transaction((tx) => {
@@ -162,7 +150,7 @@ export default function MealPlanScreen() {
     setCurrentMealPlanId(id);
     db.transaction((tx) => {
       tx.executeSql(
-        "SELECT mpfc.id AS mealPlanFoodCategoryId, mpfc.amount, fc.id AS foodCategoryId " +
+        "SELECT mpfc.id AS id, mpfc.amount, fc.id AS foodCategoryId, mpfc.mealPlanId " +
           "FROM MealPlanFoodCategories mpfc, " +
           "FoodCategory fc, " +
           "MealPlan mp " +
@@ -196,9 +184,7 @@ export default function MealPlanScreen() {
         mealPlanFoodCategory.foodCategoryId === foodCategoryId,
     );
 
-    return mealPlanFoodCategory
-      ? mealPlanFoodCategory.mealPlanFoodCategoryId
-      : undefined;
+    return mealPlanFoodCategory ? mealPlanFoodCategory.id : undefined;
   };
 
   const onDeleteMealPlan = () => {
