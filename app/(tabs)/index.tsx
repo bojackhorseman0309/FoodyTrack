@@ -261,6 +261,16 @@ export default function FoodTrackingScreen() {
     }
   };
 
+  const getPlanDate = () => {
+    if (dailyPlanHistory != null) {
+      const planDate = new Date(dailyPlanHistory.datetime);
+      return planDate.toLocaleDateString("es-CR");
+    }
+
+    return "";
+  };
+
+  console.log("daily plan history", dailyPlanHistory);
   return (
     <ScrollView
       backgroundColor="#FFF0F5"
@@ -268,7 +278,7 @@ export default function FoodTrackingScreen() {
     >
       <YStack alignItems="center" space={10}>
         <DateSwitcher
-          date="27/12/2023"
+          date={getPlanDate()}
           disableLeftChevron={false}
           disableRightChevron={false}
           onClick={() => console.log("hello")}
