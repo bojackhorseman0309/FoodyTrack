@@ -27,19 +27,6 @@ import {
 
 const db = openDatabase();
 
-// const foodCategories = [
-//   { id: 1, category: "Azucares", number: 0 },
-//   { id: 2, category: "Vegetales", number: 0 },
-//   { id: 3, category: "Grasas", number: 0 },
-//   { id: 4, category: "Alimentos Libres", number: 0 },
-//   { id: 5, category: "Suplementos", number: 0 },
-//   { id: 6, category: "Carbohidratos", number: 0 },
-//   { id: 7, category: "Frutas", number: 0 },
-//   { id: 8, category: "Lácteos", number: 0 },
-//   { id: 9, category: "Agua", number: 0 },
-//   { id: 10, category: "Carnes", number: 0 },
-// ];
-
 export default function FoodTrackingScreen() {
   const [forceUpdate, setForceUpdate] = useState(0);
   const [mealPlan, setMealPlan] = useState<MealPlan>();
@@ -66,12 +53,9 @@ export default function FoodTrackingScreen() {
                  FROM FoodCategory;`,
         [],
         (_, { rows: { _array } }) => {
-          console.log("Food Categories");
-          console.log(_array);
           const mappedFoodCategories = mapFoodCategoriesToModel(_array);
 
           if (mappedFoodCategories.length > 0) {
-            console.log("setting food categories");
             setFoodCategories(mappedFoodCategories);
           }
         },
@@ -91,12 +75,9 @@ export default function FoodTrackingScreen() {
                    AND isActive = 1;`,
         [formattedDate, formattedDate],
         (_, { rows: { _array } }) => {
-          console.log("Meal Plans");
-          console.log(_array);
           const mealPlans = mapMealPlanToModel(_array);
 
           if (mealPlans.length > 0) {
-            console.log("setting meal plan");
             setMealPlan(mealPlans[0]);
           }
         },
@@ -112,22 +93,16 @@ export default function FoodTrackingScreen() {
                  WHERE mealPlanId = ?;`,
         [mealPlanId],
         (_, { rows: { _array } }) => {
-          console.log("Meal Plan Food Categories");
-          console.log(_array);
           const mappedMealPlanFoodCategories =
             mapMealPlanFoodCategoriesToModel(_array);
 
           if (mappedMealPlanFoodCategories.length > 0) {
-            console.log("setting meal plan food categories and syncing");
             const processedSyncOfFoodCategories =
               syncMealPlanFoodCategoriesWithDailyPlan(
                 mappedMealPlanFoodCategories,
                 foodCategories,
                 dailyPlanFoodCategories,
               );
-
-            console.log("Synced food categories");
-            console.log(processedSyncOfFoodCategories);
 
             if (processedSyncOfFoodCategories.length > 0) {
               setSyncedFoodCategories(processedSyncOfFoodCategories);
@@ -150,7 +125,6 @@ export default function FoodTrackingScreen() {
       },
       (err) => console.log({ err }),
       () => {
-        console.log("Daily Plan inserted...");
         setForceUpdate(forceUpdate + 1);
       },
     );
@@ -164,13 +138,10 @@ export default function FoodTrackingScreen() {
                  WHERE dailyPlanHistoryId = ?;`,
         [dailyPlanHistoryId],
         (_, { rows: { _array } }) => {
-          console.log("Daily Plan History Food Categories");
-          console.log(_array);
           const dailyPlanFoodCategories =
             mapDailyPlanHistoryFoodCategoriesToModel(_array);
 
           if (dailyPlanFoodCategories.length > 0) {
-            console.log("setting daily plan food categories");
             setDailyPlanFoodCategories(dailyPlanFoodCategories);
           }
         },
@@ -187,7 +158,7 @@ export default function FoodTrackingScreen() {
     ) {
       mapMealPlanFoodCategoriesToFoodCategories(mealPlan.id);
     }
-  }, [dailyPlanHistory]);
+  }, [dailyPlanHistory, dailyPlanFoodCategories]);
 
   useEffect(() => {
     if (mealPlan && dailyPlanHistory === undefined) {
@@ -199,9 +170,6 @@ export default function FoodTrackingScreen() {
                      WHERE date(datetime) = ?;`,
           [today],
           (_, { rows: { _array } }) => {
-            console.log("DailyPlanHistory: ");
-            console.log(_array);
-
             if (_array.length === 0) {
               createNewDailyPlan(new Date(), mealPlan.id);
             } else {
@@ -227,6 +195,72 @@ export default function FoodTrackingScreen() {
   useEffect(() => {
     getFoodCategories();
   }, []);
+
+  const createDailyPlanFoodCategoryAmount = (
+    amount: number,
+    foodCategoryId: number,
+    dailyPlanHistoryId: number,
+  ) => {
+    db.transaction(
+      (tx) => {
+        tx.executeSql(
+          `INSERT INTO DailyPlanHistoryFoodCategories (amount, foodCategoryId, dailyPlanHistoryId)
+                     values (?, ?, ?)`,
+          [amount, foodCategoryId, dailyPlanHistoryId],
+        );
+      },
+      (err) => console.log({ err }),
+      () => {
+        if (dailyPlanHistory != null) {
+          getDailyPlanFoodCategories(dailyPlanHistory?.id);
+        }
+      },
+    );
+  };
+
+  const modifyDailyPlanFoodCategoryAmount = (amount: number, id: number) => {
+    db.transaction(
+      (tx) => {
+        tx.executeSql(
+          `UPDATE DailyPlanHistoryFoodCategories
+                     SET amount= ?
+                     WHERE id = ?;
+                    values (?, ?)`,
+          [amount, id],
+        );
+      },
+      (err) => console.log({ err }),
+      () => {
+        if (dailyPlanHistory != null) {
+          getDailyPlanFoodCategories(dailyPlanHistory?.id);
+        }
+      },
+    );
+  };
+
+  const onQuantityChange = (
+    quantity: number,
+    dailyPlanHistoryFoodCategoryId: number,
+    foodCategoryId: number,
+  ) => {
+    if (quantity < 0) {
+      return;
+    }
+
+    if (dailyPlanHistoryFoodCategoryId === 0 && dailyPlanHistory != null) {
+      createDailyPlanFoodCategoryAmount(
+        quantity,
+        foodCategoryId,
+        dailyPlanHistory?.id,
+      );
+    } else if (dailyPlanHistoryFoodCategoryId !== 0) {
+      modifyDailyPlanFoodCategoryAmount(
+        quantity,
+        dailyPlanHistoryFoodCategoryId,
+      );
+    }
+  };
+
   return (
     <ScrollView
       backgroundColor="#FFF0F5"
@@ -242,10 +276,15 @@ export default function FoodTrackingScreen() {
         {syncedFoodCategories.map((foodCategory, index) => (
           <FoodCategoryNumericInput
             key={foodCategory.foodCategoryId}
+            dailyPlanFoodCategoryId={
+              foodCategory.dailyPlanHistoryFoodCategoryId
+            }
+            foodCategoryId={foodCategory.foodCategoryId}
             category={foodCategory.name}
             number={foodCategory.currentAmount}
             isLast={syncedFoodCategories.length - 1 === index}
             mealPlanAmount={foodCategory.maxAmount}
+            onQuantityChange={onQuantityChange}
           />
         ))}
       </YStack>

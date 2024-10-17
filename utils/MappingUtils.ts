@@ -68,7 +68,7 @@ const mapDailyPlanHistoryFoodCategoriesToModel = (
   const dailyPlanHistoryFoodCategories: DailyPlanHistoryFoodCategories[] = [];
   for (const rawDailyPlanFoodCategory of rawDailyPlanFoodCategories) {
     dailyPlanHistoryFoodCategories.push({
-      id: rawDailyPlanFoodCategory.mealPlanFoodCategoryId,
+      id: rawDailyPlanFoodCategory.id,
       amount: rawDailyPlanFoodCategory.amount,
       foodCategoryId: rawDailyPlanFoodCategory.foodCategoryId,
       dailyPlanHistoryId: rawDailyPlanFoodCategory.dailyPlanHistoryId,
@@ -87,6 +87,7 @@ const syncMealPlanFoodCategoriesWithDailyPlan = (
 
   for (const foodCategory of foodCategories) {
     syncedFoodCategories.push({
+      dailyPlanHistoryFoodCategoryId: 0,
       mealPlanFoodCategoryId: 0,
       foodCategoryId: foodCategory.id,
       name: foodCategory.name,
@@ -114,8 +115,10 @@ const syncMealPlanFoodCategoriesWithDailyPlan = (
     );
 
     if (foundIndex >= 0) {
-      syncedFoodCategories[foundIndex].maxAmount =
+      syncedFoodCategories[foundIndex].currentAmount =
         dailyPlanHistoryFoodCategory.amount;
+      syncedFoodCategories[foundIndex].dailyPlanHistoryFoodCategoryId =
+        dailyPlanHistoryFoodCategory.id;
     }
   }
 
