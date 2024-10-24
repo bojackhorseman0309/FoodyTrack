@@ -5,7 +5,7 @@ interface DateSwitcherProps {
   date: string;
   disableLeftChevron: boolean;
   disableRightChevron: boolean;
-  onClick: () => void;
+  onClick: (goBack: boolean) => void;
 }
 
 const DateSwitcher = ({
@@ -19,12 +19,14 @@ const DateSwitcher = ({
       icon={ChevronLeft}
       disabled={disableLeftChevron}
       opacity={disableLeftChevron ? 0.5 : 1}
+      onPress={() => onClick(true)}
     />
     <Text>{date}</Text>
     <Button
       icon={ChevronRight}
       disabled={disableRightChevron}
       opacity={disableRightChevron ? 0.5 : 1}
+      onPress={() => onClick(false)}
     />
   </XStack>
 );

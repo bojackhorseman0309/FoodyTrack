@@ -15,6 +15,8 @@ import { SyncedPlanFoodCategories } from "../../models/FoodTracking";
 import {
   getDateInSqlLiteDateFormatAsUTC,
   getDateInSqlLiteDateFormatTimezoneSensitive,
+  isBefore,
+  sameDay,
 } from "../../utils/DateUtils";
 import {
   mapDailyPlanHistoryFoodCategoriesToModel,
@@ -41,6 +43,7 @@ export default function FoodTrackingScreen() {
   const [syncedFoodCategories, setSyncedFoodCategories] = useState<
     SyncedPlanFoodCategories[]
   >([]);
+  const [planDate, setPlanDate] = useState(new Date());
 
   useEffect(() => {
     initializeTables(db);
@@ -143,6 +146,8 @@ export default function FoodTrackingScreen() {
 
           if (dailyPlanFoodCategories.length > 0) {
             setDailyPlanFoodCategories(dailyPlanFoodCategories);
+          } else {
+            setDailyPlanFoodCategories([]);
           }
         },
       );
@@ -161,17 +166,17 @@ export default function FoodTrackingScreen() {
   }, [dailyPlanHistory, dailyPlanFoodCategories]);
 
   useEffect(() => {
-    if (mealPlan && dailyPlanHistory === undefined) {
-      const today = getDateInSqlLiteDateFormatAsUTC(new Date());
+    if (mealPlan) {
+      const pDate = getDateInSqlLiteDateFormatAsUTC(planDate);
       db.transaction((tx) => {
         tx.executeSql(
           `SELECT *
                      FROM DailyPlanHistory
                      WHERE date(datetime) = ?;`,
-          [today],
+          [pDate],
           (_, { rows: { _array } }) => {
             if (_array.length === 0) {
-              createNewDailyPlan(new Date(), mealPlan.id);
+              createNewDailyPlan(planDate, mealPlan.id);
             } else {
               const dailyPlanHistories = mapDailyPlanHistoryToModel(_array);
 
@@ -188,9 +193,9 @@ export default function FoodTrackingScreen() {
 
   useEffect(() => {
     if (foodCategories !== undefined && foodCategories.length > 0) {
-      getCurrentMealPlan(new Date());
+      getCurrentMealPlan(planDate);
     }
-  }, [foodCategories]);
+  }, [foodCategories, planDate]);
 
   useEffect(() => {
     getFoodCategories();
@@ -270,7 +275,32 @@ export default function FoodTrackingScreen() {
     return "";
   };
 
-  console.log("daily plan history", dailyPlanHistory);
+  const disableNextDay = () => {
+    if (dailyPlanHistory != null) {
+      const dailyPlanHistoryDate = new Date(dailyPlanHistory.datetime);
+      return (
+        sameDay(dailyPlanHistoryDate, new Date()) ||
+        !isBefore(dailyPlanHistoryDate, new Date())
+      );
+    }
+
+    return true;
+  };
+
+  const moveDate = (goBack: boolean) => {
+    if (dailyPlanHistory != null) {
+      const dailyPlanHistoryDate = new Date(dailyPlanHistory.datetime);
+
+      if (goBack) {
+        dailyPlanHistoryDate.setDate(dailyPlanHistoryDate.getDate() - 1);
+      } else {
+        dailyPlanHistoryDate.setDate(dailyPlanHistoryDate.getDate() + 1);
+      }
+
+      setPlanDate(dailyPlanHistoryDate);
+    }
+  };
+
   return (
     <ScrollView
       backgroundColor="#FFF0F5"
@@ -280,8 +310,8 @@ export default function FoodTrackingScreen() {
         <DateSwitcher
           date={getPlanDate()}
           disableLeftChevron={false}
-          disableRightChevron={false}
-          onClick={() => console.log("hello")}
+          disableRightChevron={disableNextDay()}
+          onClick={moveDate}
         />
         {syncedFoodCategories.map((foodCategory, index) => (
           <FoodCategoryNumericInput
