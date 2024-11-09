@@ -19,6 +19,7 @@ export default function TabLayout() {
         options={{
           title: "Food Tracking",
           tabBarIcon: ({ color }) => <Cookie color={color} />,
+          unmountOnBlur: true,
         }}
       />
       <Tabs.Screen
@@ -26,6 +27,7 @@ export default function TabLayout() {
         options={{
           title: "Food Categories",
           tabBarIcon: ({ color }) => <Apple color={color} />,
+          unmountOnBlur: true,
         }}
       />
       <Tabs.Screen
@@ -33,6 +35,7 @@ export default function TabLayout() {
         options={{
           title: "Meal Plans",
           tabBarIcon: ({ color }) => <BookOpen color={color} />,
+          unmountOnBlur: true,
         }}
       />
     </Tabs>

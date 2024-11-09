@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ScrollView, YStack } from "tamagui";
+import { H1, ScrollView, Spinner, YStack } from "tamagui";
 
 import DateSwitcher from "../../components/DateSwitcher";
 import FoodCategoryNumericInput from "../../components/FoodCategoryNumericInput";
@@ -44,6 +44,7 @@ export default function FoodTrackingScreen() {
     SyncedPlanFoodCategories[]
   >([]);
   const [planDate, setPlanDate] = useState(new Date());
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     initializeTables(db);
@@ -163,6 +164,7 @@ export default function FoodTrackingScreen() {
     ) {
       mapMealPlanFoodCategoriesToFoodCategories(mealPlan.id);
     }
+    setIsLoading(false);
   }, [dailyPlanHistory, dailyPlanFoodCategories]);
 
   useEffect(() => {
@@ -198,6 +200,7 @@ export default function FoodTrackingScreen() {
   }, [foodCategories, planDate]);
 
   useEffect(() => {
+    setIsLoading(true);
     getFoodCategories();
   }, []);
 
@@ -306,28 +309,40 @@ export default function FoodTrackingScreen() {
       backgroundColor="#FFF0F5"
       contentContainerStyle={{ padding: 15 }}
     >
-      <YStack alignItems="center" space={10}>
-        <DateSwitcher
-          date={getPlanDate()}
-          disableLeftChevron={false}
-          disableRightChevron={disableNextDay()}
-          onClick={moveDate}
-        />
-        {syncedFoodCategories.map((foodCategory, index) => (
-          <FoodCategoryNumericInput
-            key={foodCategory.foodCategoryId}
-            dailyPlanFoodCategoryId={
-              foodCategory.dailyPlanHistoryFoodCategoryId
-            }
-            foodCategoryId={foodCategory.foodCategoryId}
-            category={foodCategory.name}
-            number={foodCategory.currentAmount}
-            isLast={syncedFoodCategories.length - 1 === index}
-            mealPlanAmount={foodCategory.maxAmount}
-            onQuantityChange={onQuantityChange}
+      {isLoading && (
+        <YStack alignItems="center">
+          <Spinner size="large" color="violet" />
+        </YStack>
+      )}
+      {mealPlan === undefined && !isLoading && (
+        <YStack alignSelf="center">
+          <H1>There are no meal plans for this date.</H1>
+        </YStack>
+      )}
+      {mealPlan !== undefined && !isLoading && (
+        <YStack alignItems="center" space={10}>
+          <DateSwitcher
+            date={getPlanDate()}
+            disableLeftChevron={false}
+            disableRightChevron={disableNextDay()}
+            onClick={moveDate}
           />
-        ))}
-      </YStack>
+          {syncedFoodCategories.map((foodCategory, index) => (
+            <FoodCategoryNumericInput
+              key={foodCategory.foodCategoryId}
+              dailyPlanFoodCategoryId={
+                foodCategory.dailyPlanHistoryFoodCategoryId
+              }
+              foodCategoryId={foodCategory.foodCategoryId}
+              category={foodCategory.name}
+              number={foodCategory.currentAmount}
+              isLast={syncedFoodCategories.length - 1 === index}
+              mealPlanAmount={foodCategory.maxAmount}
+              onQuantityChange={onQuantityChange}
+            />
+          ))}
+        </YStack>
+      )}
     </ScrollView>
   );
 }
