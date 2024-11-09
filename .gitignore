@@ -43,3 +43,5 @@ expo-env.d.ts
 # JetBrains IDE's
 .idea
 .run
+
+android
