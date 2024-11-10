@@ -12,6 +12,7 @@ import { TamaguiProvider } from "tamagui";
 
 import tamaguiConfig from "../tamagui.config";
 import "@tamagui/core/reset.css";
+import "react-native-gesture-handler";
 
 export {
   // Catch any errors thrown by the Layout component.

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { H1, ScrollView, Spinner, YStack } from "tamagui";
+import { H1, ScrollView, YStack } from "tamagui";
 
 import DateSwitcher from "../../components/DateSwitcher";
 import FoodCategoryNumericInput from "../../components/FoodCategoryNumericInput";
@@ -44,7 +44,6 @@ export default function FoodTrackingScreen() {
     SyncedPlanFoodCategories[]
   >([]);
   const [planDate, setPlanDate] = useState(new Date());
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     initializeTables(db);
@@ -164,7 +163,6 @@ export default function FoodTrackingScreen() {
     ) {
       mapMealPlanFoodCategoriesToFoodCategories(mealPlan.id);
     }
-    setIsLoading(false);
   }, [dailyPlanHistory, dailyPlanFoodCategories]);
 
   useEffect(() => {
@@ -200,7 +198,6 @@ export default function FoodTrackingScreen() {
   }, [foodCategories, planDate]);
 
   useEffect(() => {
-    setIsLoading(true);
     getFoodCategories();
   }, []);
 
@@ -309,17 +306,12 @@ export default function FoodTrackingScreen() {
       backgroundColor="#FFF0F5"
       contentContainerStyle={{ padding: 15 }}
     >
-      {isLoading && (
-        <YStack alignItems="center">
-          <Spinner size="large" color="violet" />
-        </YStack>
-      )}
-      {mealPlan === undefined && !isLoading && (
+      {mealPlan === undefined && (
         <YStack alignSelf="center">
           <H1>There are no meal plans for this date.</H1>
         </YStack>
       )}
-      {mealPlan !== undefined && !isLoading && (
+      {mealPlan !== undefined && (
         <YStack alignItems="center" space={10}>
           <DateSwitcher
             date={getPlanDate()}
